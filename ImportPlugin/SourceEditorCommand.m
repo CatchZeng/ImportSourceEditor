@@ -26,14 +26,16 @@
     }
     
     //handle
-    if ([invocation.buffer.contentUTI containsString:@"objective-c-source"]) {//handle objective-c source
         NSString *selectedString = nil;
         NSInteger lastImportLineIndex = NSNotFound;
         
         //find the last import line index & selected string
         for (int idx = 0; idx < invocation.buffer.lines.count; idx++) {
             NSString *line = invocation.buffer.lines[idx];
-            if ([line containsString:@"#import"]) {
+            
+            NSString* importLine = [self isOcSource:invocation] ? @"#import" : @"import ";
+            
+            if ([line hasPrefix:importLine]) {
                 lastImportLineIndex = idx;
             }
             if (idx == selection.start.line) {
@@ -49,14 +51,14 @@
         }
         
         //check invocation contains import string
-        NSString *importString = [NSString stringWithFormat:@"#import \"%@.h\"", selectedString];
+        NSString *importString = [self isOcSource:invocation] ? [NSString stringWithFormat:@"#import \"%@.h\"", selectedString] : [NSString stringWithFormat:@"import %@",selectedString];
         if ([invocation.buffer.completeBuffer containsString:importString]) {
             completionHandler(nil);
             return;
         }
         
-        NSUInteger lineForEmpty = [self lineForEmptyImportLine:invocation.buffer.lines];
-        NSUInteger lineForAboveClassDefinition = [self lineForAboveClassDefinition:invocation.buffer.lines];
+        NSUInteger lineForEmpty = [self lineForEmptyImportLine:invocation.buffer.lines invocation:invocation];
+        NSUInteger lineForAboveClassDefinition = [self lineForAboveClassDefinition:invocation.buffer.lines invocation:invocation];
         
         if (lastImportLineIndex != NSNotFound) {//file contains #import lines
             [invocation.buffer.lines insertObject:importString atIndex:lastImportLineIndex+1];
@@ -68,14 +70,14 @@
             [invocation.buffer.lines insertObject:importString atIndex:lineForAboveClassDefinition+1];
         }
     
-    }else{//handle swift source
-        
-    }
-    
     completionHandler(nil);
 }
 
-- (NSInteger)lineForEmptyImportLine:(NSMutableArray *)lines {
+-(BOOL)isOcSource:(XCSourceEditorCommandInvocation *)invocation{
+    return [invocation.buffer.contentUTI containsString:@"objective-c-source"];
+}
+
+- (NSInteger)lineForEmptyImportLine:(NSMutableArray *)lines invocation:(XCSourceEditorCommandInvocation *)invocation{
     for (int i=0; i<lines.count; i++) {
         NSString* lineString = [lines objectAtIndex:i];
         
@@ -85,21 +87,23 @@
         if ([lineString isEqualToString:@"\n"]) {
             return i;
         }
-        if ([lineString hasPrefix:@"@"]) {
+        NSString* prefix = [self isOcSource:invocation] ? @"@" :@"class";
+        if ([lineString hasPrefix:prefix]) {
             return NSNotFound;
         }
     }
     return NSNotFound;
 }
 
-- (NSInteger)lineForAboveClassDefinition:(NSMutableArray *)lines {
+- (NSInteger)lineForAboveClassDefinition:(NSMutableArray *)lines invocation:(XCSourceEditorCommandInvocation *)invocation{
     for (int i=0; i<lines.count; i++) {
         NSString* lineString = [lines objectAtIndex:i];
         
         if ([lineString hasPrefix:@"//"]) {
             continue;
         }
-        if ([lineString hasPrefix:@"@"]) {
+        NSString* prefix = [self isOcSource:invocation] ? @"@" :@"class";
+        if ([lineString hasPrefix:prefix]) {
             return i >1 ? (i - 1): 0;
         }
     }
