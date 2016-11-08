@@ -51,7 +51,7 @@
         }
         
         //check invocation contains import string
-        NSString *importString = [self isOcSource:invocation] ? [NSString stringWithFormat:@"#import \"%@.h\"", selectedString] : [NSString stringWithFormat:@"import %@",selectedString];
+        NSString *importString = [self isOcSource:invocation] ? [NSString stringWithFormat:@"#import \"%@.h\"", trimString] : [NSString stringWithFormat:@"import %@",trimString];
         if ([invocation.buffer.completeBuffer containsString:importString]) {
             completionHandler(nil);
             return;
