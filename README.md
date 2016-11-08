@@ -9,6 +9,12 @@ Objective-C:
 
 ![Demo](https://github.com/CatchZeng/ImportSourceEditor/blob/master/demo.gif)
 
+## Change Log
+
+#### V1.1.0 fix Xcode8.1 bug
+
+#### V1.0.0 add project
+
 ## Usage
 
 #### 1.Clone/Download Project.
